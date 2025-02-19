@@ -26,6 +26,7 @@ topics:
   jfc_parser: jfc_parser
   job_ack: job-acknowledgement-topic
   bg_jobs: jfc_bgJobs
+  job_ingestion_topic: job_ingestion_topic
 
 logging:
   level:

@@ -48,9 +48,20 @@ public class JobSchedulerService {
             );
 
             for (JobCategory cat : categories) {
+                int maxForCategory;
+
+                try{
+                    maxForCategory = concurrencyService.getMaxJobsForCategory(cat);
+                } catch (RuntimeException e){
+                    System.err.println("[JobSchedulerService] Category concurrency error => " + e.getMessage());
+                    failNewJobsOfCategory(cat, e.getMessage());
+                    continue;
+                }
+
+
                 List<JobEntity> inProgress = jobRepository.findByJobCategoryAndStatus(cat, JobStatus.IN_PROGRESS);
                 int currentInProgress = inProgress.size();
-                int maxForCategory = concurrencyService.getMaxJobsForCategory(cat);
+                
                 int canScheduleCategory = maxForCategory - currentInProgress;
                 if (canScheduleCategory <= 0) continue;
 
@@ -93,6 +104,18 @@ public class JobSchedulerService {
             }
         } finally {
             lock.unlock();
+        }
+    }
+
+    private void failNewJobsOfCategory(JobCategory cat, String reason) {
+        System.out.println("[JobSchedulerService] Marking all NEW jobs of category=" 
+            + cat + " => FAIL due to " + reason);
+
+        List<JobEntity> newJobs = jobRepository.findByJobCategoryAndStatus(cat, JobStatus.NEW);
+        if (newJobs.isEmpty()) return;
+
+        for (JobEntity job : newJobs) {
+            acknowledgeJob(job.getJobId(), false);
         }
     }
 

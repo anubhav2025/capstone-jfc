@@ -22,7 +22,9 @@ public class ConcurrencyConfigService {
         String key = category.name();
         return repository.findById(key)
                 .map(ConcurrencyConfigEntity::getConfigValue)
-                .orElse(5);
+                .orElseThrow(() -> new RuntimeException(
+                    "No concurrency config found for jobCategory=" + key
+                ));
     }
 
     /**
