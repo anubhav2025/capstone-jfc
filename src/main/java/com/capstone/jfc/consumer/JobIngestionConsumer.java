@@ -1,11 +1,15 @@
 package com.capstone.jfc.consumer;
 
+import com.capstone.jfc.dto.event.CreateTicketEvent;
 import com.capstone.jfc.dto.event.ParseRequestEvent;
 import com.capstone.jfc.dto.event.ScanRequestEvent;
 import com.capstone.jfc.dto.event.StateUpdateJobEvent;
+import com.capstone.jfc.dto.event.UpdateTicketEvent;
+import com.capstone.jfc.dto.event.payload.CreateTicketEventPayload;
 import com.capstone.jfc.dto.event.payload.ParseRequestEventPayload;
 import com.capstone.jfc.dto.event.payload.ScanRequestEventPayload;
 import com.capstone.jfc.dto.event.payload.StateUpdateJobEventPayload;
+import com.capstone.jfc.dto.event.payload.UpdateTicketEventPayload;
 import com.capstone.jfc.enums.JobCategory;
 import com.capstone.jfc.enums.ToolTypes;
 import com.capstone.jfc.model.JobEntity;
@@ -73,6 +77,12 @@ public class JobIngestionConsumer {
                     break;
                 case "UPDATE_FINDING":
                     handleUpdateFinding(realRoot);
+                    break;
+                case "CREATE_TICKET":
+                    handleCreateTicket(realRoot);
+                    break;
+                case "UPDATE_TICKET":
+                    handleUpdateTicket(realRoot);
                     break;
                 default:
                     System.out.println("[JobIngestionConsumer] Received type=" + typeStr 
@@ -158,6 +168,53 @@ public class JobIngestionConsumer {
         jobRepository.save(job);
         System.out.println("[JobIngestionConsumer] UPDATE_FINDING => jobId=" + jobId
             + ", category=UPDATE_FINDING, tenant=" + tenantId);
+    }
+
+    public void handleCreateTicket(JsonNode root) throws Exception {
+        CreateTicketEvent event = objectMapper.treeToValue(root, CreateTicketEvent.class );
+        CreateTicketEventPayload payload = event.getPayload();
+
+        String jobId = event.getEventId();
+        String tenantId = payload.getTenantId();
+
+        String payloadJson = objectMapper.writeValueAsString(payload);
+
+        JobEntity job = new JobEntity();
+        job.setJobId(jobId);
+        job.setJobCategory(JobCategory.CREATE_TICKET);
+        job.setTenantId(tenantId);
+        job.setPayload(payloadJson);
+        job.setStatus(JobStatus.NEW);
+        job.setTimestampCreated(Instant.now());
+        job.setTimestampUpdated(Instant.now());
+
+        jobRepository.save(job);
+        System.out.println("[JobIngestionConsumer] CREATE_TICKET => jobId=" + jobId
+            + ", category=CREATE_TICKET, tenant=" + tenantId);
+
+    }
+
+    public void handleUpdateTicket(JsonNode root) throws Exception{
+        UpdateTicketEvent event = objectMapper.treeToValue(root, UpdateTicketEvent.class);
+        UpdateTicketEventPayload payload = event.getPayload();
+
+        String jobId = event.getEventId();
+        String tenantId = payload.getTenantId();
+
+        String payloadJson = objectMapper.writeValueAsString(payload);
+
+        JobEntity job = new JobEntity();
+        job.setJobId(jobId);
+        job.setJobCategory(JobCategory.UPDATE_TICKET);
+        job.setTenantId(tenantId);
+        job.setPayload(payloadJson);
+        job.setStatus(JobStatus.NEW);
+        job.setTimestampCreated(Instant.now());
+        job.setTimestampUpdated(Instant.now());
+
+        jobRepository.save(job);
+        System.out.println("[JobIngestionConsumer] UPDATE_TICKET => jobId=" + jobId
+            + ", category=UPDATE_TICKET, tenant=" + tenantId);
     }
 
     private JobCategory mapToolToPullCategory(ToolTypes tool) {
