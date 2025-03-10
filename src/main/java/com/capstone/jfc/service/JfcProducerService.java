@@ -3,6 +3,7 @@ package com.capstone.jfc.service;
 import com.capstone.jfc.dto.event.*;
 import com.capstone.jfc.dto.event.payload.CreateTicketEventPayload;
 import com.capstone.jfc.dto.event.payload.ParseRequestEventPayload;
+import com.capstone.jfc.dto.event.payload.RunbookJobEventPayload;
 import com.capstone.jfc.dto.event.payload.ScanRequestEventPayload;
 import com.capstone.jfc.dto.event.payload.StateUpdateJobEventPayload;
 import com.capstone.jfc.dto.event.payload.UpdateTicketEventPayload;
@@ -91,6 +92,19 @@ public class JfcProducerService {
                 UpdateTicketEvent event = new UpdateTicketEvent(payloadObj);
                 event.setEventId(jobId);
 
+                String eventJson = objectMapper.writeValueAsString(event);
+                kafkaTemplate.send(bgJobsTopic, eventJson);
+            }
+            else if(jobCategory == JobCategory.RUNBOOK_JOB){
+                // parse the payload as a RunbookJobEventPayload
+                RunbookJobEventPayload payloadObj =
+                    objectMapper.readValue(payloadJson, RunbookJobEventPayload.class);
+
+                // build the event with type=RUNBOOK_JOB
+                RunbookJobEvent event = new RunbookJobEvent(payloadObj);
+                event.setEventId(jobId);
+
+                // produce to bgJobs
                 String eventJson = objectMapper.writeValueAsString(event);
                 kafkaTemplate.send(bgJobsTopic, eventJson);
             }

@@ -46,7 +46,8 @@ public class JobSchedulerService {
                 JobCategory.SCAN_PARSE_SECRETSCAN,
                 JobCategory.UPDATE_FINDING,
                 JobCategory.CREATE_TICKET,
-                JobCategory.UPDATE_TICKET
+                JobCategory.UPDATE_TICKET,
+                JobCategory.RUNBOOK_JOB
             );
 
             for (JobCategory cat : categories) {

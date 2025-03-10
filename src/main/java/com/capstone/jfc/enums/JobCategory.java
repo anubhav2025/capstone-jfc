@@ -9,5 +9,6 @@ public enum JobCategory {
     SCAN_PARSE_SECRETSCAN,
     UPDATE_FINDING,
     CREATE_TICKET,
-    UPDATE_TICKET
+    UPDATE_TICKET,
+    RUNBOOK_JOB
 }

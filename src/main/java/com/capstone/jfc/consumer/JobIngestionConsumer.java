@@ -2,11 +2,13 @@ package com.capstone.jfc.consumer;
 
 import com.capstone.jfc.dto.event.CreateTicketEvent;
 import com.capstone.jfc.dto.event.ParseRequestEvent;
+import com.capstone.jfc.dto.event.RunbookJobEvent;
 import com.capstone.jfc.dto.event.ScanRequestEvent;
 import com.capstone.jfc.dto.event.StateUpdateJobEvent;
 import com.capstone.jfc.dto.event.UpdateTicketEvent;
 import com.capstone.jfc.dto.event.payload.CreateTicketEventPayload;
 import com.capstone.jfc.dto.event.payload.ParseRequestEventPayload;
+import com.capstone.jfc.dto.event.payload.RunbookJobEventPayload;
 import com.capstone.jfc.dto.event.payload.ScanRequestEventPayload;
 import com.capstone.jfc.dto.event.payload.StateUpdateJobEventPayload;
 import com.capstone.jfc.dto.event.payload.UpdateTicketEventPayload;
@@ -83,6 +85,9 @@ public class JobIngestionConsumer {
                     break;
                 case "UPDATE_TICKET":
                     handleUpdateTicket(realRoot);
+                    break;
+                case "RUNBOOK_JOB":
+                    handleRunbookJob(realRoot);
                     break;
                 default:
                     System.out.println("[JobIngestionConsumer] Received type=" + typeStr 
@@ -216,6 +221,24 @@ public class JobIngestionConsumer {
         System.out.println("[JobIngestionConsumer] UPDATE_TICKET => jobId=" + jobId
             + ", category=UPDATE_TICKET, tenant=" + tenantId);
     }
+
+    private void handleRunbookJob(JsonNode root) throws Exception {
+        RunbookJobEvent event = objectMapper.treeToValue(root, RunbookJobEvent.class);
+        RunbookJobEventPayload payload = event.getPayload();
+
+        // Store in DB
+        JobEntity job = new JobEntity();
+        job.setJobId(event.getEventId());
+        job.setJobCategory(JobCategory.RUNBOOK_JOB);
+        job.setTenantId(payload.getTenantId());
+        job.setPayload(objectMapper.writeValueAsString(payload));
+        job.setStatus(JobStatus.NEW);
+        job.setTimestampCreated(Instant.now());
+        job.setTimestampUpdated(Instant.now());
+
+        jobRepository.save(job);
+    }
+
 
     private JobCategory mapToolToPullCategory(ToolTypes tool) {
         switch (tool) {
